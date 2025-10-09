@@ -20,18 +20,18 @@ const App = () => {
     //JSON.parse() converts a JSON string back into a JavaScript object or array.
     //Runs only once (because dependency array [] is empty).
     //Fetches saved tasks from browser storage and restores them.
-    const savedTasks = JSON.parse(sessionStorage.getItem('tasks'));
+    const savedTasks = JSON.parse(localStorage.getItem('tasks'));
     if (savedTasks) {
       setTasks(savedTasks);
     }
   }, []);
 
   useEffect(() => {
-    sessionStorage.setItem('tasks', JSON.stringify(tasks));
+    localStorage.setItem('tasks', JSON.stringify(tasks));
   }, [tasks]);
  // console.log('tasks',tasks)
 //Runs every time tasks changes.
-//Saves the updated tasks list to sessionStorage.
+//Saves the updated tasks list to localStorage.
 
   const handleClickOpen = () => setOpen(true);
   const handleClose = () => {
