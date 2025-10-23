@@ -6,6 +6,7 @@ import {
   TextField,
   DialogActions,
   Button,
+  useTheme,
 } from "@mui/material";
 
 const TaskForm = ({
@@ -19,6 +20,7 @@ const TaskForm = ({
   editMode,
 }) => {
   const [nameError, setNameError] = useState(false);
+  const theme = useTheme(); // 👈 access current theme
 
   const validateTaskName = (name) => {
     if (!name.trim()) {
@@ -43,7 +45,9 @@ const TaskForm = ({
       maxWidth="sm"
       sx={{
         "& .MuiPaper-root": {
-          borderRadius: "16px", // Rounded corners for the modal
+          borderRadius: "16px",
+          backgroundColor: theme.palette.background.paper, // 👈 dynamic background
+          color: theme.palette.text.primary, // 👈 dynamic text color
         },
       }}
     >
@@ -52,15 +56,19 @@ const TaskForm = ({
           fontSize: "18px",
           fontWeight: "bold",
           padding: "8px 24px",
-          bgcolor: "#F6F7FB", // Background color similar to header
+          bgcolor: theme.palette.background.paper, // 👈 theme-based
+          color: theme.palette.text.primary, // 👈 theme-based
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         {editMode ? "Edit Task" : "Add New Task"}
       </DialogTitle>
+
       <DialogContent
         sx={{
           padding: "24px",
-          bgcolor: "#FFFFFF", // White background for content
+          bgcolor: theme.palette.background.paper, // 👈 theme-based
+          color: theme.palette.text.primary, /// 👈 dynamic
         }}
       >
         <TextField
@@ -71,17 +79,18 @@ const TaskForm = ({
           value={taskName}
           onChange={(e) => {
             setTaskName(e.target.value);
-            validateTaskName(e.target.value); // Validate on change
+            validateTaskName(e.target.value);
           }}
           error={nameError}
           helperText={nameError ? "Task name is required" : ""}
           sx={{
             margin: "9px 0px 12px",
             "& .MuiOutlinedInput-root": {
-              borderRadius: "8px", // Slightly rounded input fields
+              borderRadius: "8px",
             },
           }}
         />
+
         <TextField
           label="Description"
           fullWidth
@@ -91,15 +100,16 @@ const TaskForm = ({
           sx={{
             marginBottom: "0px",
             "& .MuiOutlinedInput-root": {
-              borderRadius: "8px", // Slightly rounded input fields
+              borderRadius: "8px",
             },
           }}
         />
       </DialogContent>
+
       <DialogActions
         sx={{
           padding: "7px 16px",
-          bgcolor: "#F6F7FB", // Light background for actions
+          bgcolor: theme.palette.background.paper, // 👈 from theme
           borderBottomLeftRadius: "16px",
           borderBottomRightRadius: "16px",
           display: "flex",
@@ -109,23 +119,24 @@ const TaskForm = ({
         <Button
           onClick={handleClose}
           sx={{
-            color: "#1976d2", // Primary color
+            color: theme.palette.primary.main, // 👈 theme color
             textTransform: "none",
             borderRadius: "12px",
           }}
         >
           Cancel
         </Button>
+
         <Button
           onClick={onSave}
           variant="contained"
           sx={{
-            backgroundColor: "#1976d2", // Primary color
-            color: "#ffffff",
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
             textTransform: "none",
             borderRadius: "12px",
             "&:hover": {
-              backgroundColor: "#1565c0", // Slightly darker on hover
+              backgroundColor: theme.palette.primary.dark,
             },
           }}
         >
