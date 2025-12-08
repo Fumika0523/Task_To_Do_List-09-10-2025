@@ -1,51 +1,143 @@
-# Todo List
+# Task_To_Do_List-09-10-2025 (TodoTask)
 
-## Overview
+## Project Overview
 
-This is a simple todo list application built with React and Material-UI. The application allows users to add, edit, delete, and mark tasks as complete or incomplete. Tasks can be filtered by status (All, Open, Closed), and the interface is designed to be clean and responsive.
+TodoTask is a full-stack MERN task management application that lets users securely manage their personal tasks from any device.
+
+The app started as a **simple React + Material-UI todo list** and has now been extended into a **multi-user, database-backed system** with modern authentication:
+
+- Each user has their **own private task list** stored in **MongoDB**.
+- Users can authenticate with:
+  - ✅ **Google OAuth 2.0** (session-based, using Passport.js)
+  - ✅ (Planned / In progress) **Email + password login** using JWT
+- The frontend features a **clean, responsive task UI** built with **React + MUI**, supporting full CRUD operations and task filtering.
+
+This project demonstrates both **UI/UX skills** and **real-world full-stack patterns** such as per-user data isolation, authentication, and RESTful API design.
+
+---
 
 ## Features
 
-- **Add New Task**: Allows users to add a new task with a name and description.
-     - **Task Name**: Mandate Field.
-     - **Description Name**: Optional Field.
-- **Edit Task**: Users can edit existing tasks.
-- **Delete Task**: Users can delete tasks.
-- **Mark Task as Complete**: Users can mark tasks as completed or uncompleted.
-- **Filter Tasks**: Users can filter tasks by status: All, Open (incomplete), or Closed (completed).
-- **Responsive Design**: The application is fully responsive and works well on different screen sizes.
+### 🔐 Authentication & User Management
+
+- **Google OAuth 2.0 Login**
+  - Implemented with Passport.js and sessions.
+  - After login, the backend exposes the logged-in user via `req.user`.
+- **(Planned / Optional) Email + Password Auth (JWT)**
+  - Sign up / login using email and password.
+  - Protected routes with JWT in the `Authorization: Bearer <token>` header.
+- **Per-User Data Isolation**
+  - Each task document is linked to a specific user via `userId`.
+  - Users can only access their own tasks.
+
+### ✅ Task Management (CRUD)
+
+- **Add New Task**
+  - Users can add a new task with:
+    - **Task Name** (required)
+    - **Description** (optional)
+- **Edit Task**
+  - Users can edit the name and description of an existing task.
+- **Delete Task**
+  - Users can delete tasks they no longer need.
+- **Mark Task as Complete / Incomplete**
+  - Toggle completion status for each task.
+- **Filter Tasks by Status**
+  - **All** – show every task
+  - **Open** – show only incomplete tasks
+  - **Closed** – show only completed tasks
+
+### 💻 Frontend & UI
+
+- **React + Material-UI**
+  - Clean, modern, responsive UI using MUI components.
+  - Consistent styling and theming.
+- **Responsive Design**
+  - Works well on different screen sizes (desktop, tablet, mobile).
+- **Real-Time Updates**
+  - Uses React state to update the UI immediately after CRUD actions.
+
+---
 
 ## Design Choices
 
-1. **Material-UI for Styling**:
-   - **Consistency and Customization**: Material-UI components were chosen to provide a consistent and professional look and feel. The components were customized to match a specific color scheme and design language.
-   - **Modularity**: Using Material-UI's theming capabilities allows for easy adjustments and scaling as the application grows.
+1. **Material-UI for Styling**
+   - **Consistency and Customization**: MUI components provide a professional and consistent look. The components are customized to match a specific color scheme and design language.
+   - **Modularity**: Using MUI theming makes it easy to adjust colors and typography as the application grows.
 
-2. **Component Structure**:
-   - **TaskHeader**: This component contains the header, including the title and the "New Task" button. It also includes the filter chips for switching between different task views.
-   - **TaskForm**: This modal form is used for both adding new tasks and editing existing ones. The form includes validation to ensure that task names are not empty.
-   - **TaskItem**: Represents an individual task with options to mark it as complete, edit, or delete it.
-   - **TaskList**: Renders a list of `TaskItem` components. This component is responsible for mapping over the tasks and passing down necessary props to each `TaskItem`.
+2. **Component Structure (Frontend)**
+   - **`TaskHeader`**
+     - Contains the page header, title, "New Task" button, and filter chips for switching between task views.
+   - **`TaskForm`**
+     - A modal form used for both creating and editing tasks.
+     - Contains validation to ensure the task name is not empty.
+   - **`TaskItem`**
+     - Represents an individual task.
+     - Provides controls to mark as complete/incomplete, edit, and delete.
+   - **`TaskList`**
+     - Renders a list of `TaskItem` components.
+     - Responsible for mapping over the tasks and passing down props.
 
-3. **State Management**:
-   - **Use of React's `useState`**: State is managed at the `TaskManager` level, which ensures that all components have access to the necessary data and actions.
+3. **State Management (Frontend)**
+   - Uses React’s `useState` (and optionally `useEffect`) at the **TaskManager / main page** level.
+   - Centralized state ensures all components have access to the necessary data and actions.
 
-4. **Validation**:
-   - **Task Name Validation**: The task name field is validated to ensure it is not empty. If the user tries to save a task without a name, an error message is displayed.
+4. **Validation**
+   - **Task Name Validation**
+     - The task name field is required.
+     - If the user tries to save a task without a name, an error message is displayed in the form.
+
+---
+
+## Backend & Architecture
+
+### Tech Stack (Backend)
+
+- **Node.js + Express**
+  - RESTful API for tasks and authentication.
+- **MongoDB + Mongoose**
+  - Persistent storage for users and tasks.
+- **Passport.js**
+  - Google OAuth 2.0 strategy for social login.
+- **JWT (Planned / optional)**
+  - Token-based authentication for email/password users.
+
+### Data Models (Conceptual)
+
+- **User**
+  - `googleId` (for Google sign-in)
+  - `email`
+  - `passwordHash` (for JWT login)
+  - `name`
+- **Task**
+  - `userId` (ObjectId reference to `User`)
+  - `name`
+  - `description`
+  - `completed`
+  - `createdAt`, `updatedAt` (timestamps)
+
+Every API call to manage tasks is **scoped by the authenticated user**, e.g.:
+
+- `GET /api/tasks` → returns only tasks where `userId` matches the logged-in user.
+- `POST /api/tasks` → creates a task with `userId` set to the current user.
+- `PUT /api/tasks/:id` and `DELETE /api/tasks/:id` → only allowed for tasks belonging to that user.
+
+---
 
 ## Setup Instructions
 
 ### Prerequisites
 
-- **Node.js** (v12 or higher) and **npm** installed on your machine.
+- **Node.js** (v18 or higher) and **npm** installed.
+- A **MongoDB** instance (MongoDB Atlas or local MongoDB).
+- (For Google login) **Google Cloud OAuth 2.0 credentials** (Client ID & Secret).
 
-### Steps
+### 1. Clone the Repository
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/PoonamChauhan229/Interview_Task_To_do_List.git
-   cd Interview_Task_To_do_List
-   ```
+```bash
+git clone https://github.com/Fumika0523/Task_To_Do_List-09-10-2025.git
+cd Task_To_Do_List-09-10-2025
+'''
 
 2. **Install Dependencies**:
    ```bash

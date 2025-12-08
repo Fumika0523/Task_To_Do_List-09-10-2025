@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import {
   Container,
@@ -13,11 +14,11 @@ import {
   DialogActions,
   Typography,
 } from '@mui/material';
-import TaskHeader from './Components/TaskHeader';
-import TaskList from './Components/TaskList';
-import TaskForm from './Components/TaskForm';
-import ChartCard from './Components/ChartCard';
-import './App.css';
+import TaskHeader from './TaskHeader';
+import TaskList from './TaskList';
+import TaskForm from './TaskForm';
+import ChartCard from './ChartCard';
+import '../App.css';
 import { MdLightMode, MdDarkMode } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
 
