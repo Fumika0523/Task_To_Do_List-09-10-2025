@@ -1,32 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FcGoogle } from 'react-icons/fc';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import axios from 'axios';
+import { url } from '../../../utils/constant';
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const navigate = useNavigate();
+
+  // 1) Validation schema
+  const formSchema = Yup.object().shape({
+    name: Yup.string().required('Name is required'),
+    email: Yup.string().email('Invalid email').required('Email is required'),
+    password: Yup.string().min(6, 'At least 6 characters').required('Password is required'),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref('password'), null], 'Passwords must match')
+      .required('Please confirm your password'),
   });
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  // 2) Formik setup
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationSchema: formSchema,
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        console.log('Signup values:', values);
+        // Don't send confirmPassword to backend
+        const { name, email, password } = values;
+        await postSignUpUser({ name, email, password });
+        resetForm();
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (form.password !== form.confirmPassword) {
-      alert('Passwords do not match');
-      return;
+  // 3) API call: sign up user and get JWT cookie
+  const postSignUpUser = async (newUser) => {
+    try {
+      console.log('newUser', newUser);
+      const res = await axios.post(`${url}/sign-up`, newUser, {
+        // withCredentials: true, // HttpOnly cookie
+      });
+      if (res.status === 201 || res.status === 200) {
+        console.log('Successfully signed up!', res.data);
+        navigate('/homepage');
+      }
+    } catch (error) {
+      console.log('Sign up Error:', error.response?.data || error.message);
     }
-
-    console.log('Signup form submitted:', form);
-    // later: call your /api/auth/signup endpoint here
   };
 
-  const signupWithGoogle = () => {
-    console.log('Please sign up with Google');
+  const loginWithGoogle = () => {
     window.location.href = 'http://localhost:8000/auth/google';
   };
 
@@ -69,11 +100,12 @@ const Signup = () => {
             textAlign: 'center',
           }}
         >
-          Create an account or continue with Google
+          Create an account with email or continue with Google
         </p>
 
-        {/* Sign up form */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: '16px' }}>
+        {/* Email/password SIGNUP form */}
+        <form onSubmit={formik.handleSubmit} style={{ marginBottom: '16px' }}>
+          {/* Name */}
           <div style={{ marginBottom: '12px' }}>
             <label
               htmlFor="name"
@@ -85,8 +117,9 @@ const Signup = () => {
               id="name"
               name="name"
               type="text"
-              value={form.name}
-              onChange={handleChange}
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="Your name"
               style={{
                 width: '100%',
@@ -97,8 +130,14 @@ const Signup = () => {
                 outline: 'none',
               }}
             />
+            {formik.touched.name && formik.errors.name && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {formik.errors.name}
+              </div>
+            )}
           </div>
 
+          {/* Email */}
           <div style={{ marginBottom: '12px' }}>
             <label
               htmlFor="email"
@@ -110,8 +149,9 @@ const Signup = () => {
               id="email"
               name="email"
               type="email"
-              value={form.email}
-              onChange={handleChange}
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="you@example.com"
               style={{
                 width: '100%',
@@ -122,8 +162,14 @@ const Signup = () => {
                 outline: 'none',
               }}
             />
+            {formik.touched.email && formik.errors.email && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {formik.errors.email}
+              </div>
+            )}
           </div>
 
+          {/* Password */}
           <div style={{ marginBottom: '12px' }}>
             <label
               htmlFor="password"
@@ -135,8 +181,9 @@ const Signup = () => {
               id="password"
               name="password"
               type="password"
-              value={form.password}
-              onChange={handleChange}
+              value={formik.values.password}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="••••••••"
               style={{
                 width: '100%',
@@ -147,8 +194,14 @@ const Signup = () => {
                 outline: 'none',
               }}
             />
+            {formik.touched.password && formik.errors.password && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {formik.errors.password}
+              </div>
+            )}
           </div>
 
+          {/* Confirm Password */}
           <div style={{ marginBottom: '16px' }}>
             <label
               htmlFor="confirmPassword"
@@ -160,8 +213,9 @@ const Signup = () => {
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              value={form.confirmPassword}
-              onChange={handleChange}
+              value={formik.values.confirmPassword}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               placeholder="••••••••"
               style={{
                 width: '100%',
@@ -172,24 +226,30 @@ const Signup = () => {
                 outline: 'none',
               }}
             />
+            {formik.touched.confirmPassword && formik.errors.confirmPassword && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {formik.errors.confirmPassword}
+              </div>
+            )}
           </div>
 
           <button
             type="submit"
+            disabled={formik.isSubmitting}
             style={{
               width: '100%',
               padding: '8px 0',
               borderRadius: '6px',
               border: 'none',
-              background: '#111827',
+              background: formik.isSubmitting ? '#4b5563' : '#111827',
               color: '#ffffff',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: formik.isSubmitting ? 'not-allowed' : 'pointer',
               marginBottom: '8px',
             }}
           >
-            Create account
+            {formik.isSubmitting ? 'Signing up...' : 'Sign up'}
           </button>
         </form>
 
@@ -209,7 +269,7 @@ const Signup = () => {
         {/* Google button */}
         <button
           type="button"
-          onClick={signupWithGoogle}
+          onClick={loginWithGoogle}
           style={{
             width: '100%',
             padding: '8px 0',
@@ -225,7 +285,7 @@ const Signup = () => {
           }}
         >
           <FcGoogle size={18} />
-          <span>Sign up with Google</span>
+          <span>Continue with Google</span>
         </button>
       </div>
     </div>

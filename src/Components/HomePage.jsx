@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import {
   Container,
@@ -8,11 +7,9 @@ import {
   createTheme,
   CssBaseline,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Typography,
+  Popover,
+  Grow,
 } from '@mui/material';
 import TaskHeader from './TaskHeader';
 import TaskList from './TaskList';
@@ -21,8 +18,11 @@ import ChartCard from './ChartCard';
 import '../App.css';
 import { MdLightMode, MdDarkMode } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
+  
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false); // task form modal
   const [editMode, setEditMode] = useState(false);
   const [taskId, setTaskId] = useState(null);
@@ -31,11 +31,11 @@ const HomePage = () => {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('All');
   const [mode, setMode] = useState('light');
-  const [user,setUser] = useState(null) // Holds the logged in user object from the backend (or null initially)
-  const [loggedIn,setLoggedIn] = useState(false) // a boolean to track if the user is logged in or not
+  const [user, setUser] = useState(null); // Holds the logged in user object from the backend (or null initially)
+  const [loggedIn, setLoggedIn] = useState(false); // a boolean to track if the user is logged in or not
 
-  //  state for user/profile modal
-  const [profileOpen, setProfileOpen] = useState(false);
+  // state for user/profile dropdown (MongoDB-style)
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
 
   // Dark & Light Mode function
   const theme = useMemo(
@@ -58,35 +58,34 @@ const HomePage = () => {
     [mode]
   );
 
-  const getGoogleProfile = async()=>{
-    try{
-      console.log("Google profile data is calling...")
-      // wait the response and store it in "res"
-      const res = await fetch('http://localhost:8000/',{
-        method:"GET",
-        credentials:"include", //send
-        headers:{
-          "Content-Type":"application/json"
-        }
-      })
-      console.log("res",res)
-      const data = await res.json()
-      console.log("GetGoogleProfile",data)
-      console.log("user",data.user)
-      console.log("data.loggedIn",data.loggedIn)
-      setLoggedIn(data.loggedIn)
-      if(data.loggedIn){
-        console.log("user",data.user)
-        setUser(data.user)
+  const getGoogleProfile = async () => {
+    try {
+      console.log('Google profile data is calling...');
+      const res = await fetch('http://localhost:8000/', {
+        method: 'GET',
+        credentials: 'include', //send cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('res', res);
+      const data = await res.json();
+      console.log('GetGoogleProfile', data);
+      console.log('user', data.user);
+      console.log('data.loggedIn', data.loggedIn);
+      setLoggedIn(data.loggedIn);
+      if (data.loggedIn) {
+        console.log('user', data.user);
+        setUser(data.user);
       }
-    }catch(e){
-      console.log("Failed to fetch Google Profile",e)
+    } catch (e) {
+      console.log('Failed to fetch Google Profile', e);
     }
-  }
+  };
 
-  useEffect(()=>{
-    getGoogleProfile()
-  },[])
+  useEffect(() => {
+    getGoogleProfile();
+  }, []);
 
   useEffect(() => {
     try {
@@ -174,9 +173,41 @@ const HomePage = () => {
     setMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
-  // 👇 handlers for profile modal
-  const handleProfileOpen = () => setProfileOpen(true);
-  const handleProfileClose = () => setProfileOpen(false);
+ const handleProfileOpen = event => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+  const handleProfileClose = () => {
+    setProfileAnchorEl(null);
+  };
+
+  const handleSignOut = async() => {
+    try{
+      const res = await fetch('http://localhost:8000/sign-out',{
+        method:'POST',
+        credentials:'include',//send cookies so backend can clear them
+        headers:{
+          'Content-Type':'application/json'
+        }
+      })
+
+      console.log("response",res)
+      if(res.ok){
+        //clear frontend state
+        setLoggedIn(false);
+        setUser(null)
+        handleProfileClose()
+
+        navigate('/sign-in')
+      }else{
+        const data = await res.json().catch(()=>({}))
+        console.error('Sign-out failed:',data)
+      }
+    }catch(e){
+      console.error('Signed-out error:',e)
+    }
+  };
+  
+  const isProfileOpen = Boolean(profileAnchorEl);
 
   return (
     <ThemeProvider theme={theme}>
@@ -197,25 +228,45 @@ const HomePage = () => {
             marginBottom: '10px',
             alignItems: 'center',
             gap: 1.5,
-            border:'3px solid red',
-            paddingTop:'5px'
+            border: '3px solid red',
+            paddingTop: '5px',
           }}
         >
-          {/* User icon */}
-          <FaUser
-            size={20}
-            style={{ color: 'rgba(249, 168, 6, 1)', cursor: 'pointer' }}
+          {/* User icon (MongoDB-style dropdown anchor) */}
+          <Box
             onClick={handleProfileOpen}
-          />
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              bgcolor: 'rgba(249, 168, 6, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <FaUser
+              size={18}
+              style={{ color: 'rgba(249, 168, 6, 1)' }}
+            />
+          </Box>
 
           {/* Light/Dark Theme */}
-        <div onClick={toggleTheme} style={{ cursor: 'pointer', display: 'flex' }}>
-          {mode === 'light' ? (
-            <MdDarkMode style={{ fontSize: 24, color: 'rgba(23, 3, 94, 1)' }} />
-          ) : (
-            <MdLightMode style={{ fontSize: 24, color: 'rgba(247, 206, 5, 1)' }} />
-          )}
-        </div>
+          <div
+            onClick={toggleTheme}
+            style={{ cursor: 'pointer', display: 'flex' }}
+          >
+            {mode === 'light' ? (
+              <MdDarkMode
+                style={{ fontSize: 24, color: 'rgba(23, 3, 94, 1)' }}
+              />
+            ) : (
+              <MdLightMode
+                style={{ fontSize: 24, color: 'rgba(247, 206, 5, 1)' }}
+              />
+            )}
+          </div>
         </Container>
 
         {/* Task card */}
@@ -267,33 +318,77 @@ const HomePage = () => {
           <ChartCard tasks={tasks} />
         </Container>
 
-        {/*  User/Profile Modal */}
-        <Dialog open={profileOpen} onClose={handleProfileClose}>
-          <DialogTitle style={{display:"flex",justifyContent:"center",alignItems:"center",gap:"10px"}}>
-            <FaUser style={{size:"20px",color:"orange"}}/>Account Detail</DialogTitle>
-          <DialogContent dividers>
-            <Typography variant="body1">
-            {loggedIn === true ? (
-        user ? (
-          <div>
-            <p>Google Id: {user.googleId}</p>
-            <p>Name: {user.name}</p>
-            <p>Email: {user.email}</p>
+        {/* User/Profile Dropdown (MongoDB-style) */}
+        <Popover
+          open={isProfileOpen}
+          anchorEl={profileAnchorEl}
+          onClose={handleProfileClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+          TransitionComponent={Grow}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              borderRadius: 2,
+              boxShadow: '0 10px 25px rgba(0,0,0,0.18)',
+              p: 2,
+              minWidth: 240,
+            },
+          }}
+        >
+          <Box>
+            {/* Header */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <FaUser size={18} style={{ color: 'orange' }} />
+              <Typography variant="subtitle1" fontWeight={600}>
+                Account Detail
+              </Typography>
+            </Box>
 
-            {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
-          </div>
-        ) : (
-          <p>Loading user...</p>
-        )
-      ) : (
-        <p>Not logged in</p>
-      )}
-       </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleProfileClose}>Close</Button>
-          </DialogActions>
-        </Dialog>
+            {/* Body */}
+            <Typography variant="body2" component="div">
+              {loggedIn === true ? (
+                user ? (
+                  <div>
+                    <p>Google Id: {user.googleId}</p>
+                    <p>Name: {user.name}</p>
+                    <p>Email: {user.email}</p>
+                  </div>
+                ) : (
+                  <p>Loading user...</p>
+                )
+              ) : (
+                <p>Not logged in</p>
+              )}
+            </Typography>
+
+            {/* Footer */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                mt: 1.5,
+              }}
+            >
+              <Button size="small" onClick={handleSignOut}>
+               Sign out
+              </Button>
+            </Box>
+          </Box>
+        </Popover>
       </Box>
     </ThemeProvider>
   );

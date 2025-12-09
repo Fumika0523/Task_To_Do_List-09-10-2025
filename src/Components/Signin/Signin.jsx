@@ -1,17 +1,50 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FcGoogle } from 'react-icons/fc';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import axios from 'axios';
+import { url } from '../../../utils/constant';
+import { useNavigate } from 'react-router-dom'
+
+
 
 const Signin = () => {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const navigate = useNavigate()
 
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const formSchema = Yup.object().shape({
+    email: Yup.string().required(),
+    password: Yup.string().required(),
+  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Local sign in (not wired yet):', form);
-    // later: call your /api/auth/login endpoint here
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    validationSchema: formSchema,
+    onSubmit: async (values) => {
+      console.log('onSubmit', values);
+      await postSignIn(values);
+    },
+  });
+
+  const postSignIn = async (loginUser) => {
+    console.log("Sign-in Function is calling")
+    try {
+      console.log('Login User', loginUser);
+      const response = await axios.post(
+        `${url}/sign-in`,
+        loginUser,
+        { withCredentials: true } 
+      );
+    console.log(response.data)
+      if (response.status === 200) {
+        console.log('Successfully Signed in', response.data);
+          navigate('/homepage');
+      }
+    } catch (e) {
+      console.log('Sign in Error. Please check your credentials.', e.response?.data || e.message);
+    }
   };
 
   const loginWithGoogle = () => {
@@ -62,7 +95,7 @@ const Signin = () => {
         </p>
 
         {/* Email/password form */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: '16px' }}>
+        <form onSubmit={formik.handleSubmit} style={{ marginBottom: '16px' }}>
           <div style={{ marginBottom: '12px' }}>
             <label
               htmlFor="email"
@@ -74,8 +107,8 @@ const Signin = () => {
               id="email"
               name="email"
               type="email"
-              value={form.email}
-              onChange={handleChange}
+              value={formik.values.email}
+              onChange={formik.handleChange}
               placeholder="you@example.com"
               style={{
                 width: '100%',
@@ -99,8 +132,8 @@ const Signin = () => {
               id="password"
               name="password"
               type="password"
-              value={form.password}
-              onChange={handleChange}
+              value={formik.values.password}
+              onChange={formik.handleChange}
               placeholder="••••••••"
               style={{
                 width: '100%',
