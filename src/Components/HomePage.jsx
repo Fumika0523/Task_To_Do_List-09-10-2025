@@ -19,6 +19,8 @@ import '../App.css';
 import { MdLightMode, MdDarkMode } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+
 
 const HomePage = () => {
   
@@ -176,6 +178,7 @@ const HomePage = () => {
  const handleProfileOpen = event => {
     setProfileAnchorEl(event.currentTarget);
   };
+
   const handleProfileClose = () => {
     setProfileAnchorEl(null);
   };
@@ -196,7 +199,7 @@ const HomePage = () => {
         setLoggedIn(false);
         setUser(null)
         handleProfileClose()
-
+        toast.info("Successfully Sign-out")
         navigate('/sign-in')
       }else{
         const data = await res.json().catch(()=>({}))
@@ -206,7 +209,7 @@ const HomePage = () => {
       console.error('Signed-out error:',e)
     }
   };
-  
+
   const isProfileOpen = Boolean(profileAnchorEl);
 
   return (
@@ -321,6 +324,7 @@ const HomePage = () => {
         {/* User/Profile Dropdown (MongoDB-style) */}
         <Popover
           open={isProfileOpen}
+          //anchorEl is the DOM element the popover is anchored to – in this case, the user icon in the top-right.
           anchorEl={profileAnchorEl}
           onClose={handleProfileClose}
           anchorOrigin={{
@@ -331,13 +335,14 @@ const HomePage = () => {
             vertical: 'top',
             horizontal: 'right',
           }}
+          //Grow is a transition component provided by MUI.It animates:opacity (fade in/out) and scale (slightly zoom in/out)
           TransitionComponent={Grow}
           PaperProps={{
             sx: {
               mt: 1,
               borderRadius: 2,
               boxShadow: '0 10px 25px rgba(0,0,0,0.18)',
-              p: 2,
+              py: 2,
               minWidth: 240,
             },
           }}
@@ -350,6 +355,7 @@ const HomePage = () => {
                 alignItems: 'center',
                 gap: 1,
                 mb: 1,
+                px:2,
               }}
             >
               <FaUser size={18} style={{ color: 'orange' }} />
@@ -359,10 +365,14 @@ const HomePage = () => {
             </Box>
 
             {/* Body */}
-            <Typography variant="body2" component="div">
+            {/* variant="body2" // the font size 
+            // Use a <div> tag under the hood instead of <p>,but keep all the Typography styling for variant="body2"*/}
+            <Typography variant="body2" component="div"
+            sx={{px:2}}>
+              
               {loggedIn === true ? (
                 user ? (
-                  <div>
+                  <div >
                     <p>Google Id: {user.googleId}</p>
                     <p>Name: {user.name}</p>
                     <p>Email: {user.email}</p>
@@ -375,18 +385,26 @@ const HomePage = () => {
               )}
             </Typography>
 
-            {/* Footer */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                mt: 1.5,
-              }}
-            >
-              <Button size="small" onClick={handleSignOut}>
-               Sign out
-              </Button>
-            </Box>
+           <Button
+            onClick={handleSignOut}
+            fullWidth
+            size="small"
+            sx={{
+              mt: 1.5,
+              // border:'2px solid red',
+              justifyContent: 'flex-start',
+              borderRadius: 1,
+              px: 1.5,
+              mx:0,
+              textTransform: 'none',
+              fontSize: 14,
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            Sign out
+          </Button>
           </Box>
         </Popover>
       </Box>

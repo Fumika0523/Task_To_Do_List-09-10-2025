@@ -46,7 +46,7 @@ const Signup = () => {
     try {
       console.log('newUser', newUser);
       const res = await axios.post(`${url}/sign-up`, newUser, {
-        // withCredentials: true, // HttpOnly cookie
+      withCredentials: true, // HttpOnly cookie, if you dont set, the cookie wont be stored.
       });
       if (res.status === 201 || res.status === 200) {
         console.log('Successfully signed up!', res.data);

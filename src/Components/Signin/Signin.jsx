@@ -5,15 +5,16 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import { url } from '../../../utils/constant';
 import { useNavigate } from 'react-router-dom'
-
+import { ToastContainer, toast } from 'react-toastify';
 
 
 const Signin = () => {
+
   const navigate = useNavigate()
 
   const formSchema = Yup.object().shape({
-    email: Yup.string().required(),
-    password: Yup.string().required(),
+    email: Yup.string().email('Invalid email').required('Email is required'),
+    password: Yup.string().required('Password is required'),
   });
 
   const formik = useFormik({
@@ -29,22 +30,34 @@ const Signin = () => {
   });
 
   const postSignIn = async (loginUser) => {
-    console.log("Sign-in Function is calling")
+    // console.log("Sign-in Function is calling")
     try {
-      console.log('Login User', loginUser);
+      // console.log('Login User', loginUser);
       const response = await axios.post(
         `${url}/sign-in`,
         loginUser,
         { withCredentials: true } 
       );
-    console.log(response.data)
+    // console.log('postSignIn',response.data)
       if (response.status === 200) {
         console.log('Successfully Signed in', response.data);
+       toast.success(response.data.message);
+        setTimeout(() => {
           navigate('/homepage');
+        }, 3000);
       }
-    } catch (e) {
-      console.log('Sign in Error. Please check your credentials.', e.response?.data || e.message);
-    }
+  } catch (e) {
+  console.log('Sign in Error. Please check your credentials.', e);
+
+  const errorMessage =
+    e?.response?.data?.message ||   // e.g. { message: " }
+    e?.response?.data ||            // if backend sent plain string
+    e.message ||                    // Axios / JS error message
+    'Sign in failed. Please try again.';
+
+  toast.error(errorMessage);
+}
+
   };
 
   const loginWithGoogle = () => {
@@ -53,6 +66,7 @@ const Signin = () => {
   };
 
   return (
+      <>
     <div
       style={{
         minHeight: '100vh',
@@ -96,6 +110,7 @@ const Signin = () => {
 
         {/* Email/password form */}
         <form onSubmit={formik.handleSubmit} style={{ marginBottom: '16px' }}>
+          {/* Email */}
           <div style={{ marginBottom: '12px' }}>
             <label
               htmlFor="email"
@@ -119,6 +134,11 @@ const Signin = () => {
                 outline: 'none',
               }}
             />
+               {formik.touched.email && formik.errors.email && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {formik.errors.email}
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: '16px' }}>
@@ -144,6 +164,11 @@ const Signin = () => {
                 outline: 'none',
               }}
             />
+                  {formik.touched.password && formik.errors.password && (
+              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                {formik.errors.password}
+              </div>
+            )}
           </div>
 
           <button
@@ -201,7 +226,16 @@ const Signin = () => {
         </button>
       </div>
     </div>
+
+         <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        pauseOnHover
+        newestOnTop
+      />
+      </>
   );
+
 };
 
 export default Signin;
