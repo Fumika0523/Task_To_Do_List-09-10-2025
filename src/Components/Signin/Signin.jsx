@@ -62,7 +62,7 @@ const Signin = () => {
 
   const loginWithGoogle = () => {
     console.log('Please login with Google');
-    window.location.href = 'http://localhost:8000/auth/google';
+    window.location.href = 'http://localhost:8001/auth/google';
   };
 
   return (

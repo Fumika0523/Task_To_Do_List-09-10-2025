@@ -58,7 +58,7 @@ const Signup = () => {
   };
 
   const loginWithGoogle = () => {
-    window.location.href = 'http://localhost:8000/auth/google';
+    window.location.href = 'http://localhost:8001/auth/google';
   };
 
   return (

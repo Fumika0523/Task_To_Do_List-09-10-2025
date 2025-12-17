@@ -20,6 +20,8 @@ import { MdLightMode, MdDarkMode } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
+import axios from 'axios';
+import { url } from '../../utils/constant';
 
 
 const HomePage = () => {
@@ -63,7 +65,7 @@ const HomePage = () => {
   const getGoogleProfile = async () => {
     try {
       console.log('Google profile data is calling...');
-      const res = await fetch('http://localhost:8000/', {
+      const res = await fetch('http://localhost:8001/', {
         method: 'GET',
         credentials: 'include', //send cookies
         headers: {
@@ -89,20 +91,35 @@ const HomePage = () => {
     getGoogleProfile();
   }, []);
 
-  useEffect(() => {
-    try {
-      const savedTasks = JSON.parse(localStorage.getItem('tasks'));
-      if (Array.isArray(savedTasks)) {
-        setTasks(savedTasks);
-      }
-    } catch (e) {
-      console.error('Failed to parse saved tasks', e);
-    }
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+  const fetchTasks = async()=>{
+     console.log("FetchTasks api is calling")
+    try{
+      const res = await fetch(`${url}/tasks/get`,{
+        method:'GET',
+        credentials:'include', //send cookie so auth middleware works
+        headers:{
+          'Content-Type':'application/json'
+        }
+        })
+      if(!res.ok)
+        throw new Error('Failed to fetch tasks')
+      const data = await res.json() // parse JSON
+      console.log("Loaded tasks from backend", data) //res.data does NOT exist for fetch
+      setTasks(data)
+    }catch(e){
+      console.error("Failed to fetch tasks",e)
+      toast.error("Failed to load tasks")
+    }
+  }
+ useEffect(() => {
+  if (loggedIn) fetchTasks();
+}, [loggedIn]);
+
+
+  // useEffect(() => {
+  //   localStorage.setItem('tasks', JSON.stringify(tasks));
+  // }, [tasks]);
 
   const handleClickOpen = () => {
     setEditMode(false);
@@ -120,49 +137,96 @@ const HomePage = () => {
     setTaskDescription('');
   };
 
-  const handleSaveTask = () => {
-    if (!taskName.trim()) return;
-
-    if (editMode && taskId !== null) {
-      setTasks(prev =>
-        prev.map(task =>
-          task.id === taskId
-            ? { ...task, name: taskName, description: taskDescription }
-            : task
-        )
+//New task
+const handleSaveTask = async () => {
+  if (!taskName.trim()) return;
+console.log("handleSaveTask is calling")
+  try {
+    if (editMode && taskId) {
+      // UPDATE existing task
+      const existing = tasks.find(t => t._id === taskId);
+      const res = await axios.put(
+        `${url}/tasks/update/${taskId}`,
+        {
+          name: taskName,
+          description: taskDescription,
+          completed: existing?.completed ?? false,
+        },
+        { withCredentials: true }
       );
+//if task matches taskId, replace it with the updated task from backend (res.data)
+// otherwise keep it the same
+      setTasks(prev =>
+        prev.map(t => (t._id === taskId ? res.data : t))
+      );
+      toast.success('Task updated');
     } else {
-      const newTask = {
-        id: Date.now(),
-        name: taskName,
-        description: taskDescription,
-        completed: false,
-      };
-      setTasks(prev => [...prev, newTask]);
+      // CREATE new task
+      const res = await axios.post(
+        `${url}/tasks/add`,
+        {
+          name: taskName,
+          description: taskDescription,
+        },
+        { withCredentials: true }
+      );
+      setTasks(prev => [res.data, ...prev]); // new task at top
+      toast.success('Task added');
     }
 
     handleClose();
-  };
+  } catch (e) {
+    console.error('Save task error', e.response?.data || e.message);
+    toast.error('Failed to save task');
+  }
+};
 
   const openEditModal = task => {
     setEditMode(true);
-    setTaskId(task.id);
+    setTaskId(task._id);
     setTaskName(task.name);
     setTaskDescription(task.description);
     setOpen(true);
   };
 
-  const handleDeleteTask = id => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-  };
+  // DELETE
+const handleDeleteTask = async (id) => {
+  try {
+    await axios.delete(`${TASK_API_URL}/delete/${id}`, {
+      withCredentials: true,
+    });
+    setTasks(prev => prev.filter(task => task._id !== id));
+    toast.info('Task deleted');
+  } catch (e) {
+    console.error('Delete task error', e);
+    toast.error('Failed to delete task');
+  }
+};
 
-  const handleCompleteTask = id => {
+const handleCompleteTask=async(id)=>{
+const taskData = tasks.find(t => t._id === id)
+  if(!taskData) {
+    console.log("TaskData is empty")
+    toast.info("No task data now")
+  }
+  try{
+    const res = await axios.put(
+      `${url}/tasks/update/${id}`,
+      {
+        name:taskData.name,
+        description:taskData.description,
+        completed:!taskData.completed,
+      },
+      {withCredentials:true}
+    )
     setTasks(prev =>
-      prev.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
+      prev.map(taskData=>(taskData._id === id ? res.data : taskData))
+    )
+  }catch(e){
+    console.error('Toggle complete error',e)
+    toast.error("Failed to update task")
+  }
+}
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'All') return true;
@@ -185,7 +249,7 @@ const HomePage = () => {
 
   const handleSignOut = async() => {
     try{
-      const res = await fetch('http://localhost:8000/sign-out',{
+      const res = await fetch('http://localhost:8001/sign-out',{
         method:'POST',
         credentials:'include',//send cookies so backend can clear them
         headers:{
@@ -231,7 +295,7 @@ const HomePage = () => {
             marginBottom: '10px',
             alignItems: 'center',
             gap: 1.5,
-            border: '3px solid red',
+            // border: '3px solid red',
             paddingTop: '5px',
           }}
         >

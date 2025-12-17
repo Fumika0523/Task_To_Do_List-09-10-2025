@@ -17,10 +17,10 @@ const TaskForm = ({
   setTaskName,
   setTaskDescription,
   handleSave,
-  editMode,
+  editMode, //boolean:true = editing, false = adding
 }) => {
   const [nameError, setNameError] = useState(false);
-  const theme = useTheme(); // 👈 access current theme
+  const theme = useTheme(); // access current theme
 
   const validateTaskName = (name) => {
     if (!name.trim()) {
@@ -46,8 +46,8 @@ const TaskForm = ({
       sx={{
         "& .MuiPaper-root": {
           borderRadius: "16px",
-          backgroundColor: theme.palette.background.paper, // 👈 dynamic background
-          color: theme.palette.text.primary, // 👈 dynamic text color
+          backgroundColor: theme.palette.background.paper, //  dynamic background
+          color: theme.palette.text.primary, //  dynamic text color
         },
       }}
     >
@@ -56,8 +56,8 @@ const TaskForm = ({
           fontSize: "18px",
           fontWeight: "bold",
           padding: "8px 24px",
-          bgcolor: theme.palette.background.paper, // 👈 theme-based
-          color: theme.palette.text.primary, // 👈 theme-based
+          bgcolor: theme.palette.background.paper, //  theme-based
+          color: theme.palette.text.primary, //  theme-based
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
@@ -67,8 +67,8 @@ const TaskForm = ({
       <DialogContent
         sx={{
           padding: "24px",
-          bgcolor: theme.palette.background.paper, // 👈 theme-based
-          color: theme.palette.text.primary, /// 👈 dynamic
+          bgcolor: theme.palette.background.paper, //  theme-based
+          color: theme.palette.text.primary, ///  dynamic
         }}
       >
         <TextField
@@ -109,7 +109,7 @@ const TaskForm = ({
       <DialogActions
         sx={{
           padding: "7px 16px",
-          bgcolor: theme.palette.background.paper, // 👈 from theme
+          bgcolor: theme.palette.background.paper, //  from theme
           borderBottomLeftRadius: "16px",
           borderBottomRightRadius: "16px",
           display: "flex",
@@ -119,7 +119,7 @@ const TaskForm = ({
         <Button
           onClick={handleClose}
           sx={{
-            color: theme.palette.primary.main, // 👈 theme color
+            color: theme.palette.primary.main, //  theme color
             textTransform: "none",
             borderRadius: "12px",
           }}
